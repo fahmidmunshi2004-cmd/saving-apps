@@ -1,0 +1,592 @@
+﻿<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jomao</title>
+    <script>
+        (function () {
+            try {
+                var storedTheme = localStorage.getItem("theme");
+                var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+                var theme = storedTheme === "dark" || storedTheme === "light"
+                    ? storedTheme
+                    : (prefersDark ? "dark" : "light");
+                document.documentElement.dataset.theme = theme;
+            } catch (_) { }
+        })();
+    </script>
+    <meta name="theme-color" content="#ffffff" />
+    <script>
+        (function () {
+            try {
+                var theme = document.documentElement.dataset.theme || "light";
+                var meta = document.querySelector('meta[name="theme-color"]');
+                if (meta) {
+                    meta.setAttribute("content", theme === "dark" ? "#0b1020" : "#ffffff");
+                }
+            } catch (_) { }
+        })();
+    </script>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Jomao" />
+    <link rel="manifest" href="manifest.webmanifest?v=57" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/app-icon-180.png?v=57" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png?v=57" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png?v=57" />
+    <link rel="icon" type="image/png" sizes="48x48" href="assets/icons/favicon-48.png?v=57" />
+    <link rel="shortcut icon" href="assets/icons/favicon-32.png?v=57" />
+    <link rel="preload" href="assets/font/Nohemi-Regular-BF6a4e01a26b011.ttf?v=57" as="font" type="font/ttf" crossorigin />
+    <link rel="preload" href="assets/font/Nohemi-Medium-BF6a4e01a26b011.ttf?v=57" as="font" type="font/ttf" crossorigin />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-functions-compat.js"></script>
+
+    <link rel="stylesheet" href="css/style.css?v=57" />
+    <link rel="stylesheet" href="css/modal.css?v=57" />
+    <link rel="stylesheet" href="css/dark-mode.css?v=57" />
+</head>
+
+<body>
+
+    <section id="appBootOverlay" class="app-boot-overlay" aria-live="polite" aria-label="App is loading">
+        <div class="app-boot-card">
+            <div class="app-boot-lottie-wrap" aria-hidden="true">
+                <img class="boot-brand-icon" src="assets/icons/main-logo.png?v=57" alt="" />
+            </div>
+            <h2>Jomao</h2>
+            <p>Preparing your secure workspace...</p>
+            <span class="app-boot-line native" aria-hidden="true"></span>
+        </div>
+    </section>
+
+    <div class="app-page">
+        <section id="authBar" class="auth-shell">
+            <div id="authInfo" class="auth-info" data-i18n="private_mode_login_first">Private mode is enabled. Log in
+                first.
+            </div>
+            <button id="modeBtn" class="theme-switcher" type="button" aria-pressed="false"
+                aria-label="Toggle dark mode">
+                <i class="fa-solid fa-moon theme-switcher-icon" aria-hidden="true"></i>
+            </button>
+        </section>
+
+        <section id="loginOverlay" class="login-overlay">
+            <div class="login-card">
+                <aside class="login-visual" aria-label="Jomao introduction">
+                    <div class="login-brand-row">
+                        <img src="assets/icons/main-logo.png?v=57" alt="" />
+                        <strong>Jomao</strong>
+                        <span class="login-brand-note"><span data-i18n="auth_small_steps">Small steps</span><br /><span
+                                data-i18n="auth_big_dreams">Big dreams</span></span>
+                    </div>
+                    <div class="login-visual-copy">
+                        <p data-i18n="auth_visual_money">YOUR MONEY,</p>
+                        <h2 data-i18n="auth_visual_future">YOUR FUTURE</h2>
+                        <span><span data-i18n="auth_visual_save">Save smarter. Live better.</span><br /><span
+                                data-i18n="auth_visual_start">Start your journey today.</span></span>
+                    </div>
+                    <div class="login-3d-scene" aria-hidden="true">
+                        <div class="login-wallet">
+                            <img src="assets/icons/login-wallet.svg?v=57" alt="" />
+                        </div>
+                    </div>
+                    <div class="login-benefits">
+                        <span><i class="fa-solid fa-shield-halved"></i> <span data-i18n="auth_secure_safe">Secure &amp; safe</span></span>
+                        <span><i class="fa-solid fa-bolt"></i> <span data-i18n="auth_fast_access">Fast access</span></span>
+                        <span><i class="fa-regular fa-heart"></i> <span data-i18n="auth_better_tomorrow">Better tomorrow</span></span>
+                    </div>
+                </aside>
+                <div class="login-form-panel">
+                    <button id="authModeToggle" class="auth-mode-toggle" type="button">
+                        <span id="authModePrompt" data-i18n="auth_dont_have_account">Don’t have an account?</span>
+                        <strong id="authModeAction" data-i18n="auth_sign_up">Sign Up</strong>
+                        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                    </button>
+                    <div id="authFormContent" class="auth-form-content" data-mode="signin">
+                        <img class="auth-form-logo" src="assets/icons/main-logo.png?v=57" alt="" />
+                        <h2 id="authFormTitle" data-i18n="auth_welcome_back">Welcome Back!</h2>
+                        <p id="authFormSubtitle" data-i18n="auth_login_subtitle">Log in to continue your financial journey.</p>
+                        <form id="emailAuthForm" novalidate>
+                            <div id="authNameField" class="auth-input-wrap hidden">
+                                <i class="fa-regular fa-user" aria-hidden="true"></i>
+                                <input id="authDisplayName" type="text" placeholder="Your name" autocomplete="name"
+                                    aria-label="Your name" />
+                            </div>
+                            <div class="auth-input-wrap">
+                                <i class="fa-regular fa-envelope" aria-hidden="true"></i>
+                                <input id="authEmail" type="email" placeholder="Email address" autocomplete="email"
+                                    aria-label="Email address" required />
+                            </div>
+                            <div class="auth-input-wrap">
+                                <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                                <input id="authPassword" type="password" placeholder="Password"
+                                    autocomplete="current-password" aria-label="Password" required />
+                                <button class="toggle-pass auth-password-toggle" type="button"
+                                    data-target="authPassword" aria-label="Show password">
+                                    <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <div id="authSignInOptions" class="auth-options">
+                                <label class="auth-remember"><input id="authRemember" type="checkbox" checked />
+                                    <span data-i18n="auth_remember_me">Remember me</span></label>
+                                <button id="authForgotPassword" data-i18n="auth_forgot_password" type="button">Forgot password?</button>
+                            </div>
+                            <button id="emailAuthSubmit" class="auth-submit" type="submit">
+                                <span data-i18n="auth_login">Login</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                            </button>
+                            <p id="emailAuthError" class="auth-form-error" role="status" aria-live="polite"></p>
+                        </form>
+                        <div class="auth-divider"><span data-i18n="auth_or_continue">or continue with</span></div>
+                        <div class="login-actions">
+                            <button id="googleLoginBtn" class="btn expense-btn" type="button"
+                                aria-label="Sign in with Google">
+                                <img class="login-provider-logo google-provider-logo"
+                                    src="assets/icons/google.png?v=57" alt="Google" />
+                            </button>
+                            <button id="facebookLoginBtn" class="btn facebook-login-btn" type="button"
+                                aria-label="Sign in with Facebook">
+                                <img class="login-provider-logo facebook-provider-logo"
+                                    src="assets/icons/facebook.png?v=57" alt="Facebook" />
+                            </button>
+                        </div>
+                        <p class="auth-security-note"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                            <span data-i18n="auth_private_secure">Your data stays private and secure</span>
+                            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="homeView" class="view active">
+            <div class="hero">
+                <div class="brand">
+                    <div class="logo"><img width="45" height="45" src="./assets/icons/main-logo.png?v=57" alt=""></div>
+                    <div>
+                        <h1 data-i18n="app_title">Jomao</h1>
+                        <p class="sub" data-i18n="app_subtitle">Clean finance tracker with secure visual identity</p>
+                    </div>
+                </div>
+                <div class="lang-picker-wrap">
+                    <span class="lang-label" data-i18n="language_label">Language</span>
+                    <button id="langSwitcher" class="lang-switcher" type="button" aria-haspopup="listbox"
+                        aria-expanded="false" aria-controls="langMenu" aria-label="Language selector">
+                        <span class="lang-switcher-main">
+                            <span id="langCurrentFlag" class="lang-flag" aria-hidden="true"></span>
+                            <span id="langCurrentLabel" class="lang-switcher-label">English</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-down lang-switcher-icon" aria-hidden="true"></i>
+                    </button>
+
+                    <div id="langMenu" class="lang-menu hidden" role="listbox" aria-label="Language options"></div>
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat income">
+                    <div class="label"><i class="fa-solid fa-coins"></i> <span data-i18n="income">Income</span></div>
+                    <div class="value" id="income">0 BDT</div>
+                </div>
+                <div class="stat expense">
+                    <div class="label"><i class="fa-solid fa-receipt"></i> <span data-i18n="expense">Expense</span>
+                    </div>
+                    <div class="value" id="expense">0 BDT</div>
+                </div>
+                <div class="stat balance">
+                    <div class="label"><i class="fa-solid fa-piggy-bank"></i> <span data-i18n="balance">Balance</span>
+                    </div>
+                    <div class="value" id="balance">0 BDT</div>
+                </div>
+            </div>
+
+            <div class="forms">
+                <div class="box">
+                    <h3><i class="fa-solid fa-hand-holding-dollar"></i> <span data-i18n="add_income">Add Income</span>
+                    </h3>
+                    <div class="field">
+                        <input type="number" id="incomeInput" placeholder=" " />
+                        <label class="floating-label" for="incomeInput" data-i18n="income_amount">Income amount</label>
+                    </div>
+                    <div class="field">
+                        <input type="text" id="incomeSourceInput" placeholder=" " />
+                        <label class="floating-label" for="incomeSourceInput" data-i18n="income_source">Income source
+                            (Salary/Freelance...)</label>
+                    </div>
+                    <button id="incomeBtn" class="btn income-btn" onclick="addIncome()"><i
+                            class="fa-solid fa-circle-plus"></i> <span data-i18n="save_income">Save
+                            Income</span></button>
+                </div>
+                <div class="box">
+                    <h3><i class="fa-solid fa-credit-card"></i> <span data-i18n="add_expense">Add Expense</span></h3>
+                    <div class="field">
+                        <input type="number" id="expenseInput" placeholder=" " />
+                        <label class="floating-label" for="expenseInput" data-i18n="expense_amount">Expense
+                            amount</label>
+                    </div>
+                    <div class="field">
+                        <input type="text" id="categoryInput" placeholder=" " />
+                        <label class="floating-label" for="categoryInput" data-i18n="category">Category (Food,
+                            Travel...)</label>
+                    </div>
+                    <button id="expenseBtn" class="btn expense-btn" onclick="addExpense()"><i
+                            class="fa-solid fa-circle-minus"></i> <span data-i18n="save_expense">Save
+                            Expense</span></button>
+                </div>
+            </div>
+        </section>
+
+        <section id="reportView" class="view">
+            <div id="categoryOverviewBlock" class="hidden">
+                <div class="side-head">
+                    <h3><i class="fa-solid fa-chart-simple"></i> <span data-i18n="category_overview">Category
+                            Overview</span></h3>
+                    <span class="pill">Live</span>
+                </div>
+                <ul id="list" class="list"></ul>
+                <p id="emptyState" class="empty" hidden data-i18n="no_expense_category">No expense category yet.</p>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-head">
+                    <h3><i class="fa-solid fa-chart-column"></i> <span data-i18n="expense_column_chart">Expense Column
+                            Chart</span></h3>
+                    <span class="history-count">Category wise</span>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="expenseColumnChart"></canvas>
+                </div>
+                <div class="chart-meta">
+                    <div class="meta-chip"><span data-i18n="top_category">Top Category</span><strong
+                            id="topCategory">-</strong></div>
+                    <div class="meta-chip"><span data-i18n="top_expense">Top Expense</span><strong id="topExpense">0
+                            BDT</strong></div>
+                    <div class="meta-chip"><span data-i18n="categories">Categories</span><strong
+                            id="totalCategory">0</strong></div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-head">
+                    <h3><i class="fa-solid fa-chart-pie"></i> <span data-i18n="income_pie_chart">Income Pie Chart</span>
+                    </h3>
+                    <span class="history-count">Source wise</span>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="incomePieChart"></canvas>
+                </div>
+            </div>
+
+            <div class="history">
+                <div class="history-head">
+                    <h3><i class="fa-solid fa-timeline"></i> <span data-i18n="transaction_history">Transaction
+                            History</span></h3>
+                    <div class="history-actions">
+                        <span id="txnCount" class="history-count">0 records</span>
+                        <button id="downloadPdfBtn" type="button" class="mini-btn"><i class="fa-solid fa-file-pdf"></i>
+                            <span data-i18n="download_pdf">Download PDF</span></button>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table class="txn-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="time">Time</th>
+                                <th data-i18n="type">Type</th>
+                                <th data-i18n="category_short">Category</th>
+                                <th data-i18n="amount">Amount</th>
+                                <th data-i18n="action">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="txnTableBody"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" class="tfoot">
+                                    <div class="txn-footer-stats">
+                                        <span class="foot-income"><i class="fa-solid fa-arrow-trend-up"></i> <span
+                                                data-i18n="total_income_label">Total Income:</span>
+                                            <strong id="txnTotalIncome">0 BDT</strong></span>
+                                        <span class="foot-expense"><i class="fa-solid fa-arrow-trend-down"></i> <span
+                                                data-i18n="total_expense_label">Total Expense:</span>
+                                            <strong id="txnTotalExpense">0 BDT</strong></span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <p id="txnEmpty" class="empty" hidden data-i18n="no_transactions">No transactions yet.</p>
+            </div>
+        </section>
+
+        <section id="walletView" class="view">
+            <div class="side-head">
+                <h3><i class="fa-solid fa-building-columns"></i> <span data-i18n="wallet">Wallet</span></h3><span
+                    class="pill" data-i18n="summary">Summary</span>
+            </div>
+            <div class="wallet-grid">
+                <div class="wallet-item wallet-balance">
+                    <div class="wallet-head"><i class="fa-solid fa-vault"></i><span data-i18n="current_balance">Current
+                            Balance</span></div>
+                    <strong id="walletBalance">0 BDT</strong>
+                </div>
+                <div class="wallet-item wallet-income">
+                    <div class="wallet-head"><i class="fa-solid fa-coins"></i><span data-i18n="total_income">Total
+                            Income</span></div>
+                    <strong id="walletIncome">0 BDT</strong>
+                </div>
+                <div class="wallet-item wallet-expense">
+                    <div class="wallet-head"><i class="fa-solid fa-receipt"></i><span data-i18n="total_expense">Total
+                            Expense</span></div>
+                    <strong id="walletExpense">0 BDT</strong>
+                </div>
+                <div class="wallet-item wallet-rate">
+                    <div class="wallet-head"><i class="fa-solid fa-chart-line"></i><span
+                            data-i18n="savings_rate">Savings
+                            Rate</span></div>
+                    <strong id="walletRate">0%</strong>
+                </div>
+            </div>
+            <div class="wallet-rate-chart-card">
+                <div class="wallet-rate-head">
+                    <h3><i class="fa-solid fa-gauge-high"></i> <span data-i18n="income_vs_expense">Income vs Expense
+                            Range</span></h3>
+                    <span class="history-count" data-i18n="animated">Animated</span>
+                </div>
+                <div class="wallet-rate-chart-wrap">
+                    <canvas id="walletRateChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="settingsView" class="view">
+            <div class="side-head">
+                <h3><i class="fa-solid fa-sliders"></i> <span data-i18n="settings">Settings</span></h3><span
+                    class="pill" data-i18n="control">Control</span>
+            </div>
+            <div class="settings-grid">
+                <div id="groupActionsCard" class="settings-item hidden">
+                    <strong data-i18n="group_actions">Group Actions</strong><br />
+                    <button id="createGroupBtn" class="btn income-btn" type="button"><i
+                            class="fa-solid fa-people-group"></i> <span data-i18n="create_group_account">Create Group
+                            Account</span></button>
+                    <button id="addAnotherGroupBtn" class="btn expense-btn" type="button"><i
+                            class="fa-solid fa-link"></i> <span data-i18n="join_group">Join Group</span></button>
+                </div>
+                <div id="groupActionFormCard" class="settings-item hidden">
+                    <strong id="groupActionTitle" data-i18n="group_action">Group Action</strong><br />
+                    <div class="field">
+                        <span class="field-icon group-field-icon group-name-icon" aria-hidden="true"></span>
+                        <input id="groupActionUsername" class="with-icon" type="text" placeholder=" " />
+                        <label class="floating-label" for="groupActionUsername" data-i18n="group_name">Group
+                            Name</label>
+                    </div>
+                    <div class="field">
+                        <span class="field-icon group-field-icon group-password-icon" aria-hidden="true"></span>
+                        <input id="groupActionPassword" class="with-icon" type="password" placeholder=" "
+                            autocomplete="new-password" />
+                        <label class="floating-label" for="groupActionPassword" data-i18n="group_password">Group
+                            Password</label>
+                    </div>
+                    <button id="groupActionSubmitBtn" class="btn expense-btn" type="button"><i
+                            class="fa-solid fa-paper-plane"></i> <span data-i18n="submit">Submit</span></button>
+                    <p id="groupActionHelpText" class="login-help" data-i18n="group_action_help_create">
+                        Create a group and invite members using their Google email.
+                    </p>
+                </div>
+                <div class="settings-item">
+                    <strong data-i18n="account_type">Account Type</strong><br />
+                    <span id="accountTypeText">-</span>
+                </div>
+                <div class="settings-item">
+                    <strong data-i18n="role">Role</strong><br />
+                    <span id="accountRoleText">-</span>
+                </div>
+                <div id="groupMembersCard" class="settings-item hidden">
+                    <strong data-i18n="group_members">Group Members</strong><br />
+                    <div class="group-members-summary">
+                        <span id="groupMemberCount">0</span>
+                        <span class="group-members-summary-label" data-i18n="members_count_suffix">Members</span>
+                    </div>
+                    <ul id="groupMembersList" class="simple-list"></ul>
+                </div>
+                <div id="inviteCard" class="settings-item hidden">
+                    <strong data-i18n="invite_member_admin">Invite Member (Admin)</strong><br />
+                    <div class="field">
+                        <input id="inviteEmailInput" type="email" placeholder=" " />
+                        <label class="floating-label" for="inviteEmailInput" data-i18n="friend_gmail">Friend
+                            Gmail</label>
+                    </div>
+                    <button id="sendInviteBtn" class="btn expense-btn" type="button"><i
+                            class="fa-solid fa-envelope-circle-check"></i> <span data-i18n="send_invite">Send
+                            Invite</span></button>
+                    <p id="inviteStatusText" class="login-help"></p>
+                </div>
+                <div id="requestAccessCard" class="settings-item hidden">
+                    <strong data-i18n="request_edit_access">Request Edit Access</strong><br />
+                    <div class="field">
+                        <input id="requestAccessEmailInput" type="email" placeholder=" " />
+                        <label class="floating-label" for="requestAccessEmailInput" data-i18n="admin_gmail">Admin
+                            Gmail</label>
+                    </div>
+                    <button id="requestAccessBtn" class="btn income-btn" type="button"><i class="fa-solid fa-key"></i>
+                        <span data-i18n="request_access">Request Access</span></button>
+                </div>
+                <div id="pendingRequestsCard" class="settings-item hidden">
+                    <strong data-i18n="pending_access_requests">Pending Access Requests</strong><br />
+                    <ul id="pendingRequestsList" class="simple-list"></ul>
+                </div>
+                <div id="deletedTransactionsCard" class="settings-item hidden">
+                    <strong data-i18n="deleted_transactions_admin">Deleted Transactions (Admin)</strong><br />
+                    <ul id="deletedTransactionsList" class="simple-list"></ul>
+                </div>
+                <div class="settings-item" data-theme-copy="mode-status">Theme is active.</div>
+                <div class="settings-item" data-i18n="session_lock_note">This session has login lock active. Refreshing
+                    the
+                    page requires login again.</div>
+                <div class="settings-item" data-i18n="storage_note">Data is saved in local browser storage.</div>
+                <div class="settings-item" data-i18n="reset_note">Need reset? Clear browser local storage to reset app
+                    data.
+                </div>
+                <div class="settings-item">
+                    <strong data-i18n="danger_zone">Danger Zone</strong><br />
+                    <span data-i18n="danger_desc">Pressing the button below will clear all data.</span>
+                </div>
+                <div class="settings-item">
+                    <button id="logoutBtn" class="btn income-btn" type="button"><i
+                            class="fa-solid fa-right-from-bracket"></i>
+                        <span data-i18n="log_out">Log Out</span></button>
+                </div>
+                <div class="settings-item">
+                    <button id="clearDataBtn" class="btn danger-btn" type="button"><i class="fa-solid fa-trash-can"></i>
+                        <span data-i18n="clear_all_data">Clear All Data</span></button>
+                </div>
+            </div>
+            <section class="game-corner-launch" aria-labelledby="gameCornerTitle">
+                <div class="game-corner-head">
+                    <div>
+                        <span class="game-corner-kicker" data-game-text="kicker"><i class="fa-solid fa-gamepad"
+                                aria-hidden="true"></i> MINI ARCADE</span>
+                        <h2 id="gameCornerTitle" data-game-text="title">Game Corner</h2>
+                        <p data-game-text="intro">Take a quick break, beat your best, and enjoy quick games made for
+                            mobile.</p>
+                    </div>
+                    <span class="game-corner-count"><i class="fa-solid fa-sparkles" aria-hidden="true"></i> <span
+                            data-game-text="count">50 games</span></span>
+                </div>
+                <div class="game-corner-launch-actions">
+                    <span data-game-text="categoriesLine"><i class="fa-solid fa-gamepad" aria-hidden="true"></i> Puzzles
+                        · Arcade · Classics · 50 ways to take a break</span>
+                    <button id="openGameCornerBtn" class="game-open-btn" type="button"><span data-game-text="open">Open
+                            Game Corner</span> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+                </div>
+            </section>
+        </section>
+
+        <section id="gameCornerView" class="view game-corner-view" aria-labelledby="gameCornerPageTitle">
+            <div class="game-page-header">
+                <button id="backToSettingsBtn" class="game-control-btn" type="button"><i class="fa-solid fa-arrow-left"
+                        aria-hidden="true"></i> <span data-game-text="backSettings">Settings</span></button>
+                <div class="game-page-title">
+                    <span class="game-corner-kicker" data-game-text="pageKicker"><i class="fa-solid fa-gamepad"
+                            aria-hidden="true"></i> MINI ARCADE · 50 GAMES</span>
+                    <h2 id="gameCornerPageTitle" data-game-text="title">Game Corner</h2>
+                    <p data-game-text="pageIntro">Pick a game, beat your best, and play a quick round.</p>
+                </div>
+                <label class="game-search-wrap"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input
+                        id="gameSearch" type="search" placeholder="Find a game..." autocomplete="off"
+                        data-game-placeholder="search"></label>
+            </div>
+            <div class="game-filters" role="group" aria-label="Filter games">
+                <button type="button" class="game-filter is-active" data-filter="all" data-game-text="filterAll">All
+                    50</button>
+                <button type="button" class="game-filter" data-filter="Puzzle"
+                    data-game-text="filterPuzzle">Puzzles</button>
+                <button type="button" class="game-filter" data-filter="Arcade"
+                    data-game-text="filterArcade">Arcade</button>
+                <button type="button" class="game-filter" data-filter="Classic"
+                    data-game-text="filterClassic">Classics</button>
+                <button type="button" class="game-filter" data-filter="Quick" data-game-text="filterQuick">Quick
+                    Play</button>
+            </div>
+            <div id="gameCornerGrid" class="game-corner-grid" aria-label="Choose a game"></div>
+            <p id="noGamesMessage" class="game-result hidden" data-game-text="noGames">No games match that search.</p>
+        </section>
+
+        <nav class="bottom-nav" aria-label="Bottom navigation">
+            <button class="nav-btn active" type="button" data-view="homeView"><i class="fa-solid fa-house"></i>
+                <span data-i18n="home">Home</span></button>
+            <button class="nav-btn" type="button" data-view="reportView"><i class="fa-solid fa-chart-line"></i>
+                <span data-i18n="report">Report</span></button>
+            <button class="nav-btn" type="button" data-view="walletView"><i class="fa-solid fa-wallet"></i> <span
+                    data-i18n="wallet">Wallet</span></button>
+            <button class="nav-btn" type="button" data-view="settingsView"><i class="fa-solid fa-gear"></i>
+                <span data-i18n="settings">Settings</span></button>
+        </nav>
+    </div>
+
+    <div id="appLoader" class="app-loader hidden" aria-live="polite" aria-busy="true">
+        <div class="loader-card">
+            <span class="loader-spinner" aria-hidden="true">
+                <span class="loader-core"></span>
+            </span>
+            <p id="loaderText" data-i18n="please_wait">Please wait...</p>
+        </div>
+    </div>
+
+    <section id="gameStage" class="game-stage hidden" role="dialog" aria-modal="true" aria-live="polite"
+        aria-labelledby="activeGameTitle">
+        <div class="game-modal-card">
+            <div class="game-stage-head">
+                <div><span class="game-corner-kicker" data-game-text="nowPlaying">NOW PLAYING</span>
+                    <h3 id="activeGameTitle">Game</h3>
+                </div>
+                <div class="game-stage-actions">
+                    <button id="restartGameBtn" class="game-control-btn" type="button"><i
+                            class="fa-solid fa-rotate-right" aria-hidden="true"></i> <span
+                            data-game-text="restart">Restart</span></button>
+                    <button id="closeGameBtn" class="game-control-btn" type="button" aria-label="Close game"><i
+                            class="fa-solid fa-xmark" aria-hidden="true"></i> <span
+                            data-game-text="close">Close</span></button>
+                </div>
+            </div>
+            <div id="gameStageBody" class="game-stage-body"></div>
+        </div>
+    </section>
+
+    <div id="modal-container" class="modal-container hidden" role="dialog" aria-modal="true"
+        aria-labelledby="modalTitle">
+        <div class="modal-background">
+            <div class="modal">
+                <button id="modalCloseBtn" class="close-modal" type="button" aria-label="Close modal">&times;</button>
+                <h2 id="modalTitle" data-i18n="notice">Notice</h2>
+                <div id="modalMessage" class="modal-message"></div>
+                <div class="modal-actions">
+                    <button id="modalCancelBtn" class="btn danger-btn hidden" type="button"><i
+                            class="fa-solid fa-xmark"></i> <span data-i18n="cancel">Cancel</span></button>
+                    <button id="modalOkBtn" class="btn expense-btn" type="button"><i class="fa-solid fa-check"></i>
+                        <span data-i18n="ok">OK</span></button>
+                </div>
+                <svg class="modal-svg" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"
+                    preserveAspectRatio="none" aria-hidden="true">
+                    <rect x="0" y="0" fill="none" width="226" height="162" rx="3" ry="3"></rect>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/core/state.js?v=57"></script>
+    <script src="js/core/common.js?v=57"></script>
+    <script src="js/dark-mode.js?v=57"></script>
+    <script src="js/games.js?v=57"></script>
+    <script src="js/app.js?v=57"></script>
+</body>
+
+</html>
